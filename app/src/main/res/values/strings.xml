@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Volt</string>
+    <string name="widget_name">Batterie 2×2</string>
+    <string name="widget_description">État de la batterie en temps réel : pourcentage exact, niveau dynamique et indicateur de charge.</string>
+</resources>
