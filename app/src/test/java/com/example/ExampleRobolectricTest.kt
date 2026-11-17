@@ -92,7 +92,7 @@ class ExampleRobolectricTest {
     }
 
   @Test
-  fun `glance widget hides charging badge on normal discharge and shows low badge at 12 percent`() =
+  fun `glance widget shows low badge and warning state below 20 percent`() =
     runGlanceAppWidgetUnitTest {
       setAppWidgetSize(DpSize(140.dp, 140.dp))
       provideComposable {
@@ -100,7 +100,7 @@ class ExampleRobolectricTest {
           BatteryWidgetContent(
             state =
               BatteryState(
-                percentage = 12,
+                percentage = 19,
                 isCharging = false,
                 isFull = false,
                 chargeSource = ChargeSource.NONE,
@@ -111,5 +111,27 @@ class ExampleRobolectricTest {
 
       onNode(hasTestTag("battery_widget_badge")).assertExists()
       onNode(hasTestTag("battery_widget_status")).assertHasText("Batterie faible")
+    }
+
+  @Test
+  fun `glance widget hides low badge at 20 percent or above when discharging`() =
+    runGlanceAppWidgetUnitTest {
+      setAppWidgetSize(DpSize(140.dp, 140.dp))
+      provideComposable {
+        GlanceTheme(colors = VoltGlanceColorScheme.colors) {
+          BatteryWidgetContent(
+            state =
+              BatteryState(
+                percentage = 20,
+                isCharging = false,
+                isFull = false,
+                chargeSource = ChargeSource.NONE,
+              )
+          )
+        }
+      }
+
+      onNode(hasTestTag("battery_widget_badge")).assertDoesNotExist()
+      onNode(hasTestTag("battery_widget_status")).assertHasText("Sur batterie")
     }
 }

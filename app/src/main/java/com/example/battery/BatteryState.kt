@@ -37,7 +37,7 @@ data class BatteryState(
   val updatedAtMillis: Long = System.currentTimeMillis(),
 ) {
   val isLow: Boolean
-    get() = !isCharging && percentage <= 15
+    get() = !isCharging && percentage < 20
 
   val widgetSnapshotKey: WidgetSnapshotKey
     get() =

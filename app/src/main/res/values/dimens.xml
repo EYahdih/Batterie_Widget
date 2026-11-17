@@ -5,4 +5,5 @@
     <dimen name="widget_max_resize_width">250dp</dimen>
     <dimen name="widget_max_resize_height">250dp</dimen>
     <dimen name="widget_background_radius">24dp</dimen>
+    <dimen name="widget_inner_radius">20dp</dimen>
 </resources>

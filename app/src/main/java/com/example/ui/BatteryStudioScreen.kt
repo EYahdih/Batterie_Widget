@@ -365,6 +365,31 @@ private fun LiveSquareWidgetReplica(
       animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
       label = "widgetAccent",
     )
+  val cardSurfaceColor by
+    animateColorAsState(
+      targetValue =
+        if (state.isLow) MaterialTheme.colorScheme.errorContainer
+        else MaterialTheme.colorScheme.surface,
+      animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+      label = "widgetSurface",
+    )
+  val borderColor by
+    animateColorAsState(
+      targetValue =
+        if (state.isLow) MaterialTheme.colorScheme.error
+        else MaterialTheme.colorScheme.outline.copy(alpha = 0.16f),
+      animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+      label = "widgetBorder",
+    )
+  val primaryTextColor =
+    if (state.isLow) MaterialTheme.colorScheme.onErrorContainer
+    else MaterialTheme.colorScheme.onSurface
+  val secondaryTextColor =
+    if (state.isLow) MaterialTheme.colorScheme.onErrorContainer
+    else MaterialTheme.colorScheme.onSurfaceVariant
+  val inactiveTrackColor =
+    if (state.isLow) MaterialTheme.colorScheme.surface
+    else MaterialTheme.colorScheme.surfaceVariant
 
   val activeSegments =
     if (state.percentage <= 0) 0 else ((state.percentage + 5) / 10).coerceIn(1, 10)
@@ -373,12 +398,12 @@ private fun LiveSquareWidgetReplica(
   Surface(
     modifier =
       modifier.border(
-        width = 1.dp,
-        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.16f),
+        width = if (state.isLow) 2.dp else 1.dp,
+        color = borderColor,
         shape = RoundedCornerShape(26.dp),
       ),
     shape = RoundedCornerShape(26.dp),
-    color = MaterialTheme.colorScheme.surface,
+    color = cardSurfaceColor,
     tonalElevation = 4.dp,
     shadowElevation = 6.dp,
   ) {
@@ -400,10 +425,10 @@ private fun LiveSquareWidgetReplica(
 
         if (state.isCharging || state.isLow) {
           val badgeBg =
-            if (state.isLow) MaterialTheme.colorScheme.errorContainer
+            if (state.isLow) MaterialTheme.colorScheme.error
             else MaterialTheme.colorScheme.primaryContainer
           val badgeFg =
-            if (state.isLow) MaterialTheme.colorScheme.onErrorContainer
+            if (state.isLow) MaterialTheme.colorScheme.onError
             else MaterialTheme.colorScheme.onPrimaryContainer
           val badgeText =
             when {
@@ -445,13 +470,13 @@ private fun LiveSquareWidgetReplica(
           Text(
             text = "${state.percentage}",
             style = MaterialTheme.typography.displayMedium.copy(fontSize = 42.sp),
-            color = MaterialTheme.colorScheme.onSurface,
+            color = primaryTextColor,
           )
           Spacer(modifier = Modifier.width(2.dp))
           Text(
             text = "%",
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = secondaryTextColor,
             modifier = Modifier.padding(bottom = 5.dp),
           )
         }
@@ -467,10 +492,7 @@ private fun LiveSquareWidgetReplica(
                 Modifier.weight(1f)
                   .height(7.dp)
                   .clip(RoundedCornerShape(4.dp))
-                  .background(
-                    if (isFilled) accentColor
-                    else MaterialTheme.colorScheme.surfaceVariant
-                  ),
+                  .background(if (isFilled) accentColor else inactiveTrackColor),
             )
           }
         }
@@ -478,7 +500,7 @@ private fun LiveSquareWidgetReplica(
         Text(
           text = state.statusSubtitle(),
           style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          color = secondaryTextColor,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
         )

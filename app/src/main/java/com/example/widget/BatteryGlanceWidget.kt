@@ -130,6 +130,22 @@ fun BatteryWidgetContent(state: BatteryState) {
   val accentColor =
     if (state.isLow) GlanceTheme.colors.error else GlanceTheme.colors.primary
 
+  val surfaceColor =
+    if (state.isLow) GlanceTheme.colors.errorContainer
+    else GlanceTheme.colors.widgetBackground
+  val borderColor =
+    if (state.isLow) GlanceTheme.colors.error
+    else GlanceTheme.colors.widgetBackground
+  val primaryTextColor =
+    if (state.isLow) GlanceTheme.colors.onErrorContainer
+    else GlanceTheme.colors.onSurface
+  val secondaryTextColor =
+    if (state.isLow) GlanceTheme.colors.onErrorContainer
+    else GlanceTheme.colors.onSurfaceVariant
+  val inactiveTrackColor =
+    if (state.isLow) GlanceTheme.colors.surface
+    else GlanceTheme.colors.surfaceVariant
+
   val iconRes = BatteryReader.selectBatteryIconRes(state.percentage, state.isCharging)
   val activeSegments =
     if (state.percentage <= 0) 0
@@ -137,149 +153,160 @@ fun BatteryWidgetContent(state: BatteryState) {
 
   val statusSummary = state.statusSubtitle()
 
-  Column(
+  Box(
     modifier =
       GlanceModifier.fillMaxSize()
         .appWidgetBackground()
-        .background(GlanceTheme.colors.widgetBackground)
+        .background(borderColor)
         .cornerRadius(R.dimen.widget_background_radius)
-        .padding(outerPadding)
+        .padding(if (state.isLow) 2.dp else 0.dp)
         .clickable(actionStartActivity<MainActivity>())
         .semantics {
           testTag = "battery_widget_root"
           contentDescription = "Batterie ${state.percentage}%, $statusSummary"
         },
-    verticalAlignment = Alignment.Top,
-    horizontalAlignment = Alignment.Start,
   ) {
-    // Top Row: Dynamic battery level icon + charging / low status pill
-    Row(
-      modifier = GlanceModifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
+    Column(
+      modifier =
+        GlanceModifier.fillMaxSize()
+          .background(surfaceColor)
+          .cornerRadius(
+            if (state.isLow) R.dimen.widget_inner_radius
+            else R.dimen.widget_background_radius
+          )
+          .padding(outerPadding),
+      verticalAlignment = Alignment.Top,
+      horizontalAlignment = Alignment.Start,
     ) {
-      Image(
-        provider = ImageProvider(iconRes),
-        contentDescription = "Niveau de batterie ${state.percentage}%",
-        colorFilter = ColorFilter.tint(accentColor),
-        modifier = GlanceModifier.size(iconSize).semantics { testTag = "battery_widget_icon" },
-      )
+      // Top Row: Dynamic battery level icon + charging / low status pill
+      Row(
+        modifier = GlanceModifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Image(
+          provider = ImageProvider(iconRes),
+          contentDescription = "Niveau de batterie ${state.percentage}%",
+          colorFilter = ColorFilter.tint(accentColor),
+          modifier = GlanceModifier.size(iconSize).semantics { testTag = "battery_widget_icon" },
+        )
+
+        Spacer(modifier = GlanceModifier.defaultWeight())
+
+        if (state.isCharging || state.isLow) {
+          val pillBg =
+            if (state.isLow) GlanceTheme.colors.error
+            else GlanceTheme.colors.primaryContainer
+          val pillFg =
+            if (state.isLow) GlanceTheme.colors.onError
+            else GlanceTheme.colors.onPrimaryContainer
+          val badgeText =
+            when {
+              state.isFull -> "Pleine"
+              state.isCharging -> "Charge"
+              else -> "Faible"
+            }
+
+          Row(
+            modifier =
+              GlanceModifier.background(pillBg)
+                .cornerRadius(50.dp)
+                .padding(horizontal = 8.dp, vertical = 3.dp)
+                .semantics { testTag = "battery_widget_badge" },
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            if (state.isCharging) {
+              Image(
+                provider = ImageProvider(R.drawable.ic_bolt),
+                contentDescription = "Indicateur de charge",
+                colorFilter = ColorFilter.tint(pillFg),
+                modifier = GlanceModifier.size(11.dp),
+              )
+              Spacer(modifier = GlanceModifier.width(3.dp))
+            }
+            Text(
+              text = badgeText,
+              style =
+                TextStyle(
+                  color = pillFg,
+                  fontSize = 11.sp,
+                  fontWeight = FontWeight.Medium,
+                ),
+              maxLines = 1,
+            )
+          }
+        }
+      }
 
       Spacer(modifier = GlanceModifier.defaultWeight())
 
-      if (state.isCharging || state.isLow) {
-        val pillBg =
-          if (state.isLow) GlanceTheme.colors.errorContainer
-          else GlanceTheme.colors.primaryContainer
-        val pillFg =
-          if (state.isLow) GlanceTheme.colors.onErrorContainer
-          else GlanceTheme.colors.onPrimaryContainer
-        val badgeText =
-          when {
-            state.isFull -> "Pleine"
-            state.isCharging -> "Charge"
-            else -> "Faible"
-          }
+      // Hero exact percentage
+      Row(
+        verticalAlignment = Alignment.Bottom,
+        modifier = GlanceModifier.semantics { testTag = "battery_widget_percentage" },
+      ) {
+        Text(
+          text = "${state.percentage}",
+          style =
+            TextStyle(
+              color = primaryTextColor,
+              fontSize = percentFontSize,
+              fontWeight = FontWeight.Bold,
+            ),
+          maxLines = 1,
+        )
+        Spacer(modifier = GlanceModifier.width(2.dp))
+        Text(
+          text = "%",
+          style =
+            TextStyle(
+              color = secondaryTextColor,
+              fontSize = symbolFontSize,
+              fontWeight = FontWeight.Medium,
+            ),
+          modifier = GlanceModifier.padding(bottom = 4.dp),
+          maxLines = 1,
+        )
+      }
 
-        Row(
-          modifier =
-            GlanceModifier.background(pillBg)
-              .cornerRadius(50.dp)
-              .padding(horizontal = 8.dp, vertical = 3.dp)
-              .semantics { testTag = "battery_widget_badge" },
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          if (state.isCharging) {
-            Image(
-              provider = ImageProvider(R.drawable.ic_bolt),
-              contentDescription = "Indicateur de charge",
-              colorFilter = ColorFilter.tint(pillFg),
-              modifier = GlanceModifier.size(11.dp),
-            )
+      Spacer(modifier = GlanceModifier.height(6.dp))
+
+      // Minimalist 10-pill segmented dynamic level bar
+      Row(
+        modifier = GlanceModifier.fillMaxWidth().semantics { testTag = "battery_widget_meter" },
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        for (index in 0 until 10) {
+          val isFilled = index < activeSegments
+          val segmentColor =
+            if (isFilled) accentColor else inactiveTrackColor
+          Box(
+            modifier =
+              GlanceModifier.defaultWeight()
+                .height(6.dp)
+                .background(segmentColor)
+                .cornerRadius(4.dp),
+            content = {},
+          )
+          if (index < 9) {
             Spacer(modifier = GlanceModifier.width(3.dp))
           }
-          Text(
-            text = badgeText,
-            style =
-              TextStyle(
-                color = pillFg,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-              ),
-            maxLines = 1,
-          )
         }
       }
-    }
 
-    Spacer(modifier = GlanceModifier.defaultWeight())
+      Spacer(modifier = GlanceModifier.height(6.dp))
 
-    // Hero exact percentage
-    Row(
-      verticalAlignment = Alignment.Bottom,
-      modifier = GlanceModifier.semantics { testTag = "battery_widget_percentage" },
-    ) {
+      // Subtle status subtitle
       Text(
-        text = "${state.percentage}",
+        text = statusSummary,
         style =
           TextStyle(
-            color = GlanceTheme.colors.onSurface,
-            fontSize = percentFontSize,
-            fontWeight = FontWeight.Bold,
-          ),
-        maxLines = 1,
-      )
-      Spacer(modifier = GlanceModifier.width(2.dp))
-      Text(
-        text = "%",
-        style =
-          TextStyle(
-            color = GlanceTheme.colors.onSurfaceVariant,
-            fontSize = symbolFontSize,
+            color = secondaryTextColor,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
           ),
-        modifier = GlanceModifier.padding(bottom = 4.dp),
         maxLines = 1,
+        modifier = GlanceModifier.semantics { testTag = "battery_widget_status" },
       )
     }
-
-    Spacer(modifier = GlanceModifier.height(6.dp))
-
-    // Minimalist 10-pill segmented dynamic level bar
-    Row(
-      modifier = GlanceModifier.fillMaxWidth().semantics { testTag = "battery_widget_meter" },
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      for (index in 0 until 10) {
-        val isFilled = index < activeSegments
-        val segmentColor =
-          if (isFilled) accentColor else GlanceTheme.colors.surfaceVariant
-        Box(
-          modifier =
-            GlanceModifier.defaultWeight()
-              .height(6.dp)
-              .background(segmentColor)
-              .cornerRadius(4.dp),
-          content = {},
-        )
-        if (index < 9) {
-          Spacer(modifier = GlanceModifier.width(3.dp))
-        }
-      }
-    }
-
-    Spacer(modifier = GlanceModifier.height(6.dp))
-
-    // Subtle status subtitle
-    Text(
-      text = statusSummary,
-      style =
-        TextStyle(
-          color = GlanceTheme.colors.onSurfaceVariant,
-          fontSize = 11.sp,
-          fontWeight = FontWeight.Medium,
-        ),
-      maxLines = 1,
-      modifier = GlanceModifier.semantics { testTag = "battery_widget_status" },
-    )
   }
 }
